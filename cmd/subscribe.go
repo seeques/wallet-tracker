@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"context"
-	// "fmt"
+	"fmt"
 	"log"
 	"sync"
 
@@ -20,7 +20,7 @@ var subscribeCmd = &cobra.Command{
 	Long:  `Continously listen for and display new blocks as they are added to the blockchain`,
 	Run: func(cmd *cobra.Command, args []string) {
 		addresses := map[common.Address]bool{
-			common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"): true,
+			common.HexToAddress("0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549"): true,
 		}
 
 		client, headers, sub, err := subscriber.Subscribe(webSocketURL)
@@ -61,7 +61,8 @@ var subscribeCmd = &cobra.Command{
 		go func() {
 			defer wg.Done()
 			for header := range worker {
-				fetcher.TrackWallets(client, header, addresses, chainID)
+				err := fetcher.TrackWallets(client, header, addresses, chainID)
+				fmt.Errorf("%v", err)
 			}
 		}()
 
