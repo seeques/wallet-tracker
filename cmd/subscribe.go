@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"os/signal"
+	"os"
+	"syscall"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	// "github.com/ethereum/go-ethereum/ethclient"
@@ -17,7 +20,7 @@ import (
 var subscribeCmd = &cobra.Command{
 	Use:   "subscribe",
 	Short: "Subscribe to new blocks",
-	Long:  `Continously listen for and display new blocks as they are added to the blockchain`,
+	Long:  `Continously listen to and display new blocks as they are added to the blockchain`,
 	Run: func(cmd *cobra.Command, args []string) {
 		addresses := map[common.Address]bool{
 			common.HexToAddress("0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549"): true,
@@ -40,21 +43,28 @@ var subscribeCmd = &cobra.Command{
 		var wg sync.WaitGroup
 		worker := make(chan *types.Header, 10)
 
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+		ctx, cancel := context.WithCancel(context.Background())
+
 		// Receiver logic
 		wg.Add(1)
-		go func() {
+		go func(ctx context.Context) {
 			defer wg.Done()
 			defer close(worker) // if we stop, processor need to know that no more workers will arrive
 			for {
 				select {
+				case <-ctx.Done():
+					return
 				case err := <-sub.Err():
-					log.Fatal(err)
+					fmt.Printf("%v", err)
 					return
 				case header := <-headers:
 					worker <- header // populate worker
 				}
 			} 
-		}()
+		}(ctx)
 		
 		// Processor logic
 		wg.Add(1)
@@ -62,8 +72,17 @@ var subscribeCmd = &cobra.Command{
 			defer wg.Done()
 			for header := range worker {
 				err := fetcher.TrackWallets(client, header, addresses, chainID)
-				fmt.Errorf("%v", err)
+				if err != nil {
+					fmt.Printf("%v", err)
+				}
 			}
+		}()
+		
+		// wait for signal to fire
+		// if websocket drops, the wa.Wait() unblocks and program exits
+		go func() {
+			<-sigs
+			cancel()
 		}()
 
 		// Wait for goroutines
