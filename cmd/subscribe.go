@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	// "context"
+	"context"
 	// "fmt"
 	"log"
 
@@ -28,12 +28,18 @@ var subscribeCmd = &cobra.Command{
 		}
 		defer client.Close()
 
+		// Get chain ID to fetch tx's from address
+		chainID, err := client.NetworkID(context.Background())
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		for {
 			select {
 			case err := <-sub.Err():
 				log.Fatal(err)
 			case header := <-headers:
-				fetcher.TrackWallets(client, header, addresses)
+				fetcher.TrackWallets(client, header, addresses, chainID)
 			}
 		}
 	},

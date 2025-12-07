@@ -3,19 +3,14 @@ package fetcher
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[common.Address]bool) error {
-	// Get chain ID to fetch tx's from address
-	chainID, err := client.NetworkID(context.Background())
-	if err != nil {
-		return fmt.Errorf("Failed to get network ID: %v", err)
-	}
-
+func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[common.Address]bool, chainID *big.Int) error {
 	fmt.Printf("New block header: %v\n", header.Hash().Hex())
 
 	block, err := client.BlockByHash(context.Background(), header.Hash())
