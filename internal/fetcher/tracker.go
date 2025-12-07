@@ -19,7 +19,7 @@ func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[
 	}
 
 	for _, tx := range block.Transactions() {
-		from, err := types.Sender(types.NewLondonSigner(chainID), tx)
+		from, err := types.Sender(types.NewPragueSigner(chainID), tx)
 		if err != nil {
 			return fmt.Errorf("Failed to get the sender: %v", err)
 		}
@@ -28,7 +28,7 @@ func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[
 			fmt.Printf("Spotted from address %s in tx %s\n", from.Hex(), tx.Hash().Hex())
 		}
 
-		if addresses[*tx.To()] && tx.To != nil {
+		if  tx.To() != nil && addresses[*tx.To()] {
 			fmt.Printf("Spotted to address %s in tx %s\n", tx.To().Hex(), tx.Hash().Hex())
 		}
 	}
