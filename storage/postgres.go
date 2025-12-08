@@ -19,8 +19,17 @@ type TrackedTransaction struct {
 	Timestamp   uint64
 }
 
+type PostgresStorage struct {
+	pool *pgxpool.Pool
+}
+
 type Storage interface {
 	SaveTransaction(ctx context.Context, tx *TrackedTransaction) error
+}
+
+// Create a constructor function
+func NewPgStorage(pool *pgxpool.Pool) *PostgresStorage {
+	return &PostgresStorage{pool: pool}
 }
 
 func CreatePool() (*Pool, error) {
