@@ -5,9 +5,8 @@ import (
 	"math/big"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/seeques/wallet-tracker/internal/config"
 )
-
-// connection string: postgres://tracker:tracker@localhost:5432/wallet_tracker?sslmode=disable
 
 type TrackedTransaction struct {
 	Hash        string
@@ -39,7 +38,8 @@ func NewPgStorage(pool *pgxpool.Pool) *PostgresStorage {
 }
 
 func CreatePool() (*pgxpool.Pool, error) {
-	conn, err := pgxpool.New(context.Background(), "postgres://tracker:tracker@localhost:5432/wallet_tracker?sslmode=disable")
+	config := config.LoadConfig()
+	conn, err := pgxpool.New(context.Background(), config.DatabaseURL)
 	if err != nil {
 		return nil, err
 	}

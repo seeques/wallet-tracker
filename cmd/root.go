@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/seeques/wallet-tracker/internal/config"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -36,5 +37,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&webSocketURL, "socket", "ws://localhost:8545", "WebSocket URL")
+	config := config.LoadConfig()
+	rootCmd.PersistentFlags().StringVar(&webSocketURL, "socket", config.ETH_RPC_URL, "WebSocket URL")
 }

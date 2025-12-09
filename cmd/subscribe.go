@@ -11,9 +11,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	// "github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/common"
+	// "github.com/ethereum/go-ethereum/common"
 	"github.com/seeques/wallet-tracker/internal/fetcher"
 	"github.com/seeques/wallet-tracker/internal/subscriber"
+	"github.com/seeques/wallet-tracker/internal/config"
 	"github.com/seeques/wallet-tracker/storage"
 	"github.com/spf13/cobra"
 )
@@ -23,9 +24,7 @@ var subscribeCmd = &cobra.Command{
 	Short: "Subscribe to new blocks",
 	Long:  `Continously listen to and display new blocks as they are added to the blockchain`,
 	Run: func(cmd *cobra.Command, args []string) {
-		addresses := map[common.Address]bool{
-			common.HexToAddress("0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549"): true,
-		}
+		config := config.LoadConfig()
 
 		client, headers, sub, err := subscriber.Subscribe(webSocketURL)
 		if err != nil {
@@ -81,7 +80,7 @@ var subscribeCmd = &cobra.Command{
 		go func() {
 			defer wg.Done()
 			for header := range worker {
-				err := fetcher.TrackWallets(client, header, addresses, chainID, storage)
+				err := fetcher.TrackWallets(client, header, config.Addresses, chainID, storage)
 				if err != nil {
 					fmt.Printf("%v", err)
 				}
