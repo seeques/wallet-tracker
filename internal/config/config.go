@@ -10,22 +10,22 @@ import (
 
 type Config struct {
 	ETH_RPC_URL string
-	Addresses []string
+	Addresses map[common.Address]bool
 	DatabaseURL string
 }
 
-func loadConfig() Config {
+func LoadConfig() Config {
 	godotenv.Load()
 
 	return Config{
 		ETH_RPC_URL: os.Getenv("ETH_RPC_URL"),
 		DatabaseURL: os.Getenv("DATABASE_URL"),
-		Addresses: parseAddresses(os.Getenv("WATCHED_ADDRESSES"))
+		Addresses: ParseAddresses(os.Getenv("WATCHED_ADDRESSES")),
 	}
 }
 
-func parseAddresses(raw string) map[common.Address]bool {
-	result := make(map[commod.Address]bool)
+func ParseAddresses(raw string) map[common.Address]bool {
+	result := make(map[common.Address]bool)
 	if raw == "" {
 		return result
 	}
