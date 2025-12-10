@@ -34,7 +34,7 @@ func (s *PostgresStorage) SaveTransaction(ctx context.Context, tx *TrackedTransa
 }
 
 func (s *PostgresStorage) GetByAddress(ctx context.Context, address string) ([]TrackedTransaction, error) {
-	sql := `SELECT hash, block_number, from_address, to_address, val, tmstp 
+	sql := `SELECT hash, block_number, from_address, to_address, val::TEXT, tmstp 
 	FROM transactions 
 	WHERE from_address = $1 OR to_address = $1
 	ORDER BY block_number DESC`
@@ -49,18 +49,22 @@ func (s *PostgresStorage) GetByAddress(ctx context.Context, address string) ([]T
 
 	for rows.Next() {
 		var tx TrackedTransaction
+		var valueStr string
 
 		err := rows.Scan(
 			&tx.Hash,
 			&tx.BlockNumber,
 			&tx.From,
 			&tx.To,
-			&tx.Value,
+			&valueStr,
 			&tx.Timestamp,
 		)
 		if err != nil {
 			return nil, err
 		}
+		value := new(big.Int)
+		value.SetString(valueStr, 10)
+		tx.Value = value
 
 		transactions = append(transactions, tx)
 	}
