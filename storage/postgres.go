@@ -23,6 +23,7 @@ type PostgresStorage struct {
 
 type Storage interface {
 	SaveTransaction(ctx context.Context, tx *TrackedTransaction) error
+	GetByAddress(ctx context.Context, address string) ([]TrackedTransaction, error)
 }
 
 func (s *PostgresStorage) SaveTransaction(ctx context.Context, tx *TrackedTransaction) error {
@@ -30,6 +31,41 @@ func (s *PostgresStorage) SaveTransaction(ctx context.Context, tx *TrackedTransa
 
 	_, err := s.pool.Exec(ctx, sql, tx.Hash, tx.BlockNumber, tx.From, tx.To, tx.Value, tx.Timestamp)
 	return err
+}
+
+func (s *PostgresStorage) GetByAddress(ctx context.Context, address string) ([]TrackedTransaction, error) {
+	sql := `SELECT hash, block_number, from_address, to_address, val, tmstp 
+	FROM transactions 
+	WHERE from_address = $1 OR to_address = $1
+	ORDER BY block_number DESC`
+
+	rows, err := s.pool.Query(ctx, sql, address)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []TrackedTransaction
+
+	for rows.Next() {
+		var tx TrackedTransaction
+
+		err := rows.Scan(
+			&tx.Hash,
+			&tx.BlockNumber,
+			&tx.From,
+			&tx.To,
+			&tx.Value,
+			&tx.Timestamp,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		transactions = append(transactions, tx)
+	}
+
+	return transactions, nil
 }
 
 // Create a constructor function
