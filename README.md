@@ -143,8 +143,8 @@ CREATE TABLE transactions (
     block_number BIGINT NOT NULL,
     from_address VARCHAR(42) NOT NULL,
     to_address VARCHAR(42),
-    value NUMERIC NOT NULL,
-    timestamp BIGINT NOT NULL,
+    val NUMERIC NOT NULL,
+    tmstp BIGINT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
 ```
