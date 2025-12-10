@@ -33,6 +33,9 @@ func (s *PostgresStorage) SaveTransaction(ctx context.Context, tx *TrackedTransa
 	return err
 }
 
+// This function queries all txs made by specific address
+// Since TrackedTransaction struct has value as *big.Int type and our table saves value as NUMERIC, 
+// in sql we convert it to TEXT and later call new(big.Int).SaveString with converted value
 func (s *PostgresStorage) GetByAddress(ctx context.Context, address string) ([]TrackedTransaction, error) {
 	sql := `SELECT hash, block_number, from_address, to_address, val::TEXT, tmstp 
 	FROM transactions 
