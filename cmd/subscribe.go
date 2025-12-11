@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -16,6 +14,7 @@ import (
 	"github.com/seeques/wallet-tracker/internal/subscriber"
 	"github.com/seeques/wallet-tracker/internal/config"
 	"github.com/seeques/wallet-tracker/storage"
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +27,7 @@ var subscribeCmd = &cobra.Command{
 
 		client, headers, sub, err := subscriber.Subscribe(webSocketURL)
 		if err != nil {
-			log.Fatal(err)
+			log.Error().Err(err).Msg("")
 		}
 		defer client.Close()
 		defer sub.Unsubscribe()
@@ -36,13 +35,13 @@ var subscribeCmd = &cobra.Command{
 		// Get chain ID to fetch tx's from address
 		chainID, err := client.NetworkID(context.Background())
 		if err != nil {
-			log.Fatal(err)
+			log.Error().Err(err).Msg("Fetching networkID failed")
 		}
 
 		// create pool
 		pool, err := storage.CreatePool()
 		if err != nil {
-			fmt.Printf("Unable to connect to database: %v\n", err)
+			log.Error().Err(err).Msg("Database connection failed")
 		}
 		defer pool.Close()
 
@@ -67,7 +66,7 @@ var subscribeCmd = &cobra.Command{
 				case <-ctx.Done():
 					return
 				case err := <-sub.Err():
-					fmt.Printf("%v", err)
+					log.Error().Err(err).Msg("")
 					return
 				case header := <-headers:
 					worker <- header // populate worker
@@ -82,7 +81,7 @@ var subscribeCmd = &cobra.Command{
 			for header := range worker {
 				err := fetcher.TrackWallets(client, header, config.Addresses, chainID, storage)
 				if err != nil {
-					fmt.Printf("%v", err)
+					log.Error().Err(err).Msg("TrackWallets failed")
 				}
 			}
 		}()

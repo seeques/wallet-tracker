@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/seeques/wallet-tracker/storage"
+	"github.com/rs/zerolog/log"
 )
 
 func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[common.Address]bool, chainID *big.Int, store storage.Storage) error {
@@ -16,22 +17,26 @@ func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[
 
 	block, err := client.BlockByHash(context.Background(), header.Hash())
 	if err != nil {
-		return fmt.Errorf("Failed to fetch block by hash: %v", err)
+		return err
 	}
 
 	for _, tx := range block.Transactions() {
 		from, err := types.Sender(types.NewPragueSigner(chainID), tx)
 		if err != nil {
-			return fmt.Errorf("Failed to get the sender: %v", err)
+			return err
 		}
 
 		if addresses[from] {
-			fmt.Printf("Spotted from address %s in tx %s\n", from.Hex(), tx.Hash().Hex())
-
 			toAddr := ""
 			if tx.To() != nil {
 				toAddr = tx.To().Hex()
 			}
+
+			log.Info().
+    			Str("tx", tx.Hash().Hex()).
+    			Str("from", from.Hex()).
+    			Str("to", toAddr).
+    			Msg("matched transaction")
 
 			tracked := &storage.TrackedTransaction{
 				Hash:        tx.Hash().Hex(),
@@ -49,7 +54,12 @@ func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[
 		}
 
 		if tx.To() != nil && addresses[*tx.To()] {
-			fmt.Printf("Spotted to address %s in tx %s\n", tx.To().Hex(), tx.Hash().Hex())
+
+			log.Info().
+    			Str("tx", tx.Hash().Hex()).
+    			Str("from", from.Hex()).
+    			Str("to", tx.To().Hex()).
+    			Msg("matched transaction")
 
 			tracked := &storage.TrackedTransaction{
 				Hash:        tx.Hash().Hex(),

@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/spf13/cobra"
 	// "github.com/seeques/wallet-tracker/internal/config"
 	"github.com/seeques/wallet-tracker/storage"
+	"github.com/rs/zerolog/log"
 )
 
 var historyCmd = &cobra.Command{
@@ -15,13 +15,13 @@ var historyCmd = &cobra.Command{
 	Long:  `Read transaction values sent from or to tracked wallet address by specifying the address with a flag`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			fmt.Println("Need to provide an address")
+			log.Info().Msg("Need to provide an address")
 			return
 		}
 
 		pool, err := storage.CreatePool()
 		if err != nil {
-			fmt.Printf("Unable to connect to database, %v\n", err)
+			log.Error().Err(err).Msg("Unable to connect to database")
 		}
 		defer pool.Close()
 
@@ -29,14 +29,16 @@ var historyCmd = &cobra.Command{
 
 		txs, err := store.GetByAddress(context.Background(), args[0])
 		if err != nil {
-			fmt.Printf("Error scanning tracked wallet, %v\n", err)
+			log.Error().Err(err).Msg("Error scanning tracked wallets")
 		}
 
 		for i := range txs {
 			tx := &txs[i]
 
 			value := tx.Value
-			fmt.Printf("Value: %d\n", value)
+
+			valueU64 := value.Uint64()
+			log.Info().Uint64("value", valueU64).Msg("")
 		}
 	},
 }
