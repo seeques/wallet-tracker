@@ -27,7 +27,9 @@ type Storage interface {
 }
 
 func (s *PostgresStorage) SaveTransaction(ctx context.Context, tx *TrackedTransaction) error {
-	sql := `INSERT INTO transactions (hash, block_number, from_address, to_address, val, tmstp) VALUES ($1, $2, $3, $4, $5, $6)`
+	sql := `INSERT INTO transactions (hash, block_number, from_address, to_address, val, tmstp) 
+	VALUES ($1, $2, $3, $4, $5, $6)
+	ON CONFLICT (hash) DO NOTHING`
 
 	_, err := s.pool.Exec(ctx, sql, tx.Hash, tx.BlockNumber, tx.From, tx.To, tx.Value, tx.Timestamp)
 	return err
