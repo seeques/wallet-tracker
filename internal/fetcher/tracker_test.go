@@ -6,15 +6,14 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/seeques/wallet-tracker/internal/config"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/seeques/wallet-tracker/storage"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func setUpSubscription(t *testing.T) (*ethclient.Client, *types.Header, *big.Int, map[common.Address]bool) {
-	config := config.LoadConfig()
 	rpcURL := os.Getenv("ETH_RPC_URL")
 
 	client, err := ethclient.Dial(rpcURL)
@@ -34,21 +33,34 @@ func setUpSubscription(t *testing.T) (*ethclient.Client, *types.Header, *big.Int
 		t.Fatal(err)
 	}
 
-	return client, header, chainID, config.Addresses
+	addresses := map[common.Address]bool{common.HexToAddress("0x21a31Ee1afC51d94C2eFcCAa2092aD1028285549"): true}
+
+	return client, header, chainID, addresses
+}
+
+func setupTestDB(t *testing.T) *pgxpool.Pool {
+    dbURL := os.Getenv("DATABASE_URL")
+    if dbURL == "" {
+        t.Skip("DATABASE_URL not set, skipping test")
+    }
+    
+    pool, err := pgxpool.New(context.Background(), dbURL)
+    if err != nil {
+        t.Fatalf("failed to connect: %v", err)
+    }
+    
+    return pool
 }
 
 func TestTrackedWallets(t *testing.T) {
 	client, header, chainID, addresses := setUpSubscription(t)
 
-	pool, err := storage.CreatePool()
-	if err != nil {
-			t.Fatal(err)
-		}
+	pool := setupTestDB(t)
 	defer pool.Close()
 
 	storage := storage.NewPgStorage(pool)
 
-	err = TrackWallets(client, header, addresses, chainID, storage)
+	err := TrackWallets(client, header, addresses, chainID, storage)
 	if err != nil {
 		t.Fatal(err)
 	}
