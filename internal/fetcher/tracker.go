@@ -2,7 +2,6 @@ package fetcher
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -13,7 +12,7 @@ import (
 )
 
 func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[common.Address]bool, chainID *big.Int, store storage.Storage) error {
-	fmt.Printf("New block header: %v\n", header.Hash().Hex())
+	log.Info().Str("header", header.Hash().Hex()).Msg("New block Header")
 
 	block, err := client.BlockByHash(context.Background(), header.Hash())
 	if err != nil {
