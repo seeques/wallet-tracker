@@ -14,7 +14,7 @@ import (
 func TrackWallets(client *ethclient.Client, header *types.Header, addresses map[common.Address]bool, chainID *big.Int, store storage.Storage) error {
 	log.Info().Str("header", header.Hash().Hex()).Msg("New block Header")
 
-	block, err := client.BlockByHash(context.Background(), header.Hash())
+	block, err := client.BlockByNumber(context.Background(), header.Number)
 	if err != nil {
 		return err
 	}
