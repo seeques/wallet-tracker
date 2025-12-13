@@ -27,7 +27,7 @@ var subscribeCmd = &cobra.Command{
 
 		client, headers, sub, err := subscriber.Subscribe(webSocketURL)
 		if err != nil {
-			log.Error().Err(err).Msg("")
+			log.Fatal().Err(err).Msg("")
 		}
 		defer client.Close()
 		defer sub.Unsubscribe()
@@ -90,6 +90,7 @@ var subscribeCmd = &cobra.Command{
 		// if websocket drops, the wa.Wait() unblocks and program exits
 		go func() {
 			<-sigs
+			log.Info().Msg("Shutdown signal received")
 			cancel()
 		}()
 
